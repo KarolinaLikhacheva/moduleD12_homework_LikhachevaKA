@@ -1,0 +1,35 @@
+{% extends 'flatpages/default.html' %}
+
+{% block title %} All Categories {% endblock title %}
+
+{% block content %}
+    <h3>Все категории</h3>
+    <ul>
+        {% for category in categories %}
+            <li><a href="{% url 'news:category' category.id %}">{{ category.name }}</a> 
+                <div>
+                {% if category.id %}
+                    {% if user not in category.subscribers.all %}
+                    <form action="{% url 'news:subscribe' category.id %}" method="POST">
+                        {% csrf_token %}
+                        <input type="submit" value="Подписаться {{category.id }}"/>
+                    </form>
+                    {% else %}
+                    <form action="{% url 'news:unsubscribe' category.id %}" method="POST">
+                        {% csrf_token %}
+                        <input type="submit" value="Отписаться {{category.id }}"/>
+                    </form>
+                    {% endif %}
+                {% endif %}
+                </div>
+            </li>
+            
+        {% endfor %}
+        {% include 'news_app/inc/posts.html' %}
+    </ul>
+
+    <hr>
+    <br>
+    <h5><a href="/news/"> <--Вернуться к новостям </a></h5>
+    <br>
+{% endblock content %}
