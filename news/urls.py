@@ -6,6 +6,7 @@ from .views import PostCategoryView
 from .views import AllCategoriesView
 
 
+
 # импортируем наше представление
 app_name = 'news'
 

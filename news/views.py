@@ -22,12 +22,28 @@ from django.views.generic.base import View
 from django.shortcuts import redirect
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-
-
+import logging
+from django.http import HttpResponse
+import os
 
 
 DEFAULT_FROM_EMAIL = settings.DEFAULT_FROM_EMAIL
 
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)  # желаемый уровень логирования, например, DEBUG, INFO, ERROR.
+
+# обработчик для записи логов в файл
+log_file = 'view.log'
+file_handler = logging.FileHandler(log_file)
+file_handler.setLevel(logging.DEBUG)  # Установите уровень для файла
+
+# форматтер для определения формата записей в лог-файле
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# обработчик к логгеру
+logger.addHandler(file_handler)
 
 class NewsList(ListView):
     model = Post  # указываем модель, объекты которой мы будем выводить
