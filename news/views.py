@@ -202,3 +202,33 @@ class AppointmentView(View):
         appointment.save()
 
         return redirect('news:make_app')
+    
+
+
+
+def read_log_file(log_file):
+    try:
+        with open(log_file, 'r') as file:
+            log_content = file.read()
+    except FileNotFoundError:
+        log_content = "Log file not found."
+    return log_content
+
+def view_log(request):
+    log_content = read_log_file('view.log')
+    return render(request, 'log_page_view.html', {'log_content': log_content})
+
+def general_log(request):
+    log_content = read_log_file('general.log')
+    return render(request, 'log_page_general.html', {'log_content': log_content})
+
+def errors_log(request):
+    log_content = read_log_file('errors.log')
+    return render(request, 'log_page_errors.html', {'log_content': log_content})
+
+def security_log(request):
+    log_content = read_log_file('security.log')
+    return render(request, 'log_page_security.html', {'log_content': log_content})
+
+def log_links(request):
+    return render(request, 'log_page.html')

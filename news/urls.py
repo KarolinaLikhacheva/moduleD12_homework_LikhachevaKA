@@ -5,7 +5,11 @@ from .views import AppointmentView
 from .views import PostCategoryView
 from .views import AllCategoriesView
 
-
+from .views import view_log
+from .views import errors_log
+from .views import security_log
+from .views import general_log
+from .views import log_links
 
 # импортируем наше представление
 app_name = 'news'
