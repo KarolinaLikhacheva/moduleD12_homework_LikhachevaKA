@@ -1,82 +1,65 @@
 import logging
+
 from django.conf import settings
+
 from apscheduler.schedulers.blocking import BlockingScheduler
-from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from django.core.management.base import BaseCommand
-import datetime
 from django_apscheduler.jobstores import DjangoJobStore
 from django_apscheduler.models import DjangoJobExecution
-from django.core.mail import send_mail, EmailMultiAlternatives
-from django.template.loader import render_to_string
-from .news.models import Category, Post
-from django.urls import reverse
-from django.utils import timezone
-from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
-def send_weekly_article():
-    start_date = datetime.today() - timedelta(days=6)
-    this_weeks_posts = Post.objects.filter(dateCreation__gt=start_date)
-    for cat in Category.objects.all():
-        post_list = this_weeks_posts.filter(postCategory=cat)
-        if post_list:
-            subscribers = cat.subscribers.all()
-            context = {
-                'post_list': post_list,
-                'cat': cat,
-            }
 
-            for sub in subscribers:
-                context['sub'] = sub
-                html_content = render_to_string('weekly_posts.html', context)
-
-                msg = EmailMultiAlternatives(
-                    subject=f'{cat.name}: Посты за прошедшую неделю',
-                    from_email='l-karolina-a@mail.ru',
-                    to=[sub.email],
-                )
-                msg.attach_alternative(html_content, "text/html")
-                # msg.send()
-                print(html_content)
-
-
-
-
-
-
+# наша задача по выводу текста на экран
+# python manage.py runapscheduler
+def my_job():
+    #  Your job processing logic here...
+    print('hello from job')
 
 
 # функция которая будет удалять неактуальные задачи
-def delete_old_job_executions(scheduler, max_age=604_800):
+def delete_old_job_executions(max_age=604_800):
     """This job deletes all apscheduler job executions older than `max_age` from the database."""
     DjangoJobExecution.objects.delete_old_job_executions(max_age)
+
 
 class Command(BaseCommand):
     help = "Runs apscheduler."
 
-    # Здесь будет прописываться как часто будет отправляться сообщение (раз в неделю)
     def handle(self, *args, **options):
         scheduler = BlockingScheduler(timezone=settings.TIME_ZONE)
         scheduler.add_jobstore(DjangoJobStore(), "default")
 
         # добавляем работу нашему задачнику
         scheduler.add_job(
-            send_weekly_article_list,
-            trigger=CronTrigger(second="*/40"),
-            id="send_weekly_article_list",
+            my_job,
+            trigger=CronTrigger(second="*/10"),
+            # Тоже самое что и интервал, но задача тригера таким образом более понятна django
+            id="my_job",  # уникальный айди
             max_instances=1,
             replace_existing=True,
         )
-        logger.info("Added job 'send_weekly_article_list'.")
+        logger.info("Added job 'my_job'.")
 
-        delete_old_job_executions(scheduler)
+        scheduler.add_job(
+            delete_old_job_executions,
+            trigger=CronTrigger(
+                day_of_week="mon", hour="00", minute="00"
+            ),
+            # Каждую неделю будут удаляться старые задачи, которые либо не удалось выполнить, либо уже выполнять не надо.
+            id="delete_old_job_executions",
+            max_instances=1,
+            replace_existing=True,
+        )
+        logger.info(
+            "Added weekly job: 'delete_old_job_executions'."
+        )
 
         try:
-            logger.info("Starting scheduler...")
+            logger.info("Успешно запушен...")
             scheduler.start()
         except KeyboardInterrupt:
-            logger.info("Stopping scheduler...")
+            logger.info("Остановка...")
             scheduler.shutdown()
-            logger.info("Scheduler shut down successfully!")
+            logger.info("Успешно выключен!")
